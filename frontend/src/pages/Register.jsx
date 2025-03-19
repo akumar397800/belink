@@ -4,6 +4,8 @@ import { FaEyeSlash, FaEye } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Axios from "../utils/axios";
 import SummaryApi from "../common/SummaryApi";
+import AxiosToastError from "../utils/AxiosToasterror";
+import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
   const [data, setData] = useState({
@@ -23,24 +25,41 @@ const Register = () => {
       };
     });
   };
-    const validValue = Object.values(data).every((e1) => e1);
-    
-    const handleSubmit = async(e) => { 
-        e.preventDefault()
+  const validValue = Object.values(data).every((e1) => e1);
+  const navigate = useNavigate();
 
-        if (data.password !== data.confirmPassword) {
-            toast.error(
-                "Password and Confirm Password must be the same"
-            )
-            return
-        }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        const response = await Axios({
-            ...SummaryApi.register
-        })
-        console.log("response" ,response)
-        
+    if (data.password !== data.confirmPassword) {
+      toast.error("Password and Confirm Password must be the same");
+      return;
     }
+    // for the popup toast when user regiser himself.
+    try {
+      const response = await Axios({
+        ...SummaryApi.register,
+        data: data,
+      });
+      if (response.data.error) {
+        toast.error(response.data.message);
+      }
+
+      if (response.data.success) {
+        toast.success(response.data.message);
+        setData({
+          name: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+        });
+        navigate("/login");
+      }
+      console.log("response", response);
+    } catch (error) {
+      AxiosToastError(error);
+    }
+  };
   return (
     <section className="w-full container mx-auto px-2">
       <div className="bg-white my-4 w-full max-w-lg mx-auto rounded p-7">
@@ -119,10 +138,22 @@ const Register = () => {
             </div>
           </div>
 
-          <button disabled={!validValue} className={`${validValue?"bg-green-800 hover:bg-green-700":"bg-gray-500"}   text-white p-2 rounded font-semibold my-2 `}>
+          <button
+            disabled={!validValue}
+            className={`${
+              validValue ? "bg-green-800 hover:bg-green-700" : "bg-gray-500"
+            }   text-white p-2 rounded font-semibold my-2 `}
+          >
             Register
           </button>
         </form>
+
+        <p>
+          Already have account?
+          <Link to={"/login"} className="font-semibold text-green-600 hover:text-green-900">
+            Login
+          </Link>
+        </p>
       </div>
     </section>
   );
